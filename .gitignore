@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+/config/secret.js
+
+# Logs and runtime
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build / deploy
+.vercel
+dist/
+build/
+
+.idea/
+
+# App-specific
+/public/images/
