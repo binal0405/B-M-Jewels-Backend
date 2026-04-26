@@ -12,6 +12,14 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+const JEWELLERY_TYPES = ['all_fine', '9_carat'];
+
+function normalizeJewelleryType(value) {
+  const v = typeof value === 'string' ? value.trim() : '';
+  if (JEWELLERY_TYPES.includes(v)) return v;
+  return 'all_fine';
+}
+
 // Add category
 exports.addCategory = async (req, res, next) => {
     try {
@@ -35,6 +43,7 @@ exports.addCategory = async (req, res, next) => {
         const data = {
             category_name: req.body.category_name,
             category_image: fileName, // Store only the filename
+            jewellery_type: normalizeJewelleryType(req.body.jewellery_type),
         };
         data.category_image = 'images/' + data.category_image;
 
@@ -67,6 +76,10 @@ exports.updateCategory = async (req, res, next) => {
         console.log("Request File:", req.file);
 
         const data = { ...req.body };
+
+        if (req.body.jewellery_type !== undefined) {
+            data.jewellery_type = normalizeJewelleryType(req.body.jewellery_type);
+        }
 
         // If a new file is uploaded, update category_image
         if (req.file) {
@@ -146,7 +159,13 @@ exports.addAllCategory = async (req, res, next) => {
 // Get show categories
 exports.getShowCategory = async (req, res, next) => {
     try {
-        const categories = await categoryServices.getShowCategoryServices();
+        const { jewellery_type } = req.query;
+        const query = { status: 'Show' };
+        if (jewellery_type === 'all_fine' || jewellery_type === '9_carat') {
+            query.jewellery_type = jewellery_type;
+        }
+
+        const categories = await categoryServices.getShowCategoryServices(query);
 
         const formattedCategories = categories.map(category => ({
             ...category.toObject(),
@@ -189,7 +208,12 @@ exports.getAllCategory = async (req, res, next) => {
 // Controller method
 exports.getWebCategory = async (req, res, next) => {
     try {
-        const categories = await categoryServices.getWebCategoryServices();
+        const { jewellery_type } = req.query;
+        const jt = (jewellery_type === 'all_fine' || jewellery_type === '9_carat')
+            ? jewellery_type
+            : 'all_fine';
+
+        const categories = await categoryServices.getWebCategoryServices(jt);
 
         // Format image URLs with ADMIN_URL if needed
         const formattedCategories = categories.map(category => ({
