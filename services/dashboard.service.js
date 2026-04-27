@@ -137,17 +137,26 @@ exports.getDashboardDataService = async () => {
         // Fetch all data in parallel for better performance
         const [banners, categories, products] = await Promise.all([
             Banner.find({}).sort({ createdAt: 1 }),
-            Category.find({ status: 'Show' }).sort({ createdAt: -1 }).populate('products'),
+            // Website should show only fine jewellery categories
+            Category.find({ status: 'Show', jewellery_type: 'all_fine' })
+                .sort({ createdAt: -1 })
+                .populate('products'),
             Product.find({ status: 'Show' })
                 .sort({ createdAt: -1 })
                 .limit(8)
                 .populate('category metal_type rate purity'),
         ]);
 
+        // Filter out 9-carat products (based on category jewellery_type)
+        const fineProducts = (products || []).filter((p) => {
+            const jewelleryType = p?.category?.jewellery_type;
+            return !jewelleryType || jewelleryType === 'all_fine';
+        });
+
         return {
             banners,
             categories,
-            products,
+            products: fineProducts,
         };
     } catch (error) {
         throw error;

@@ -27,23 +27,24 @@ exports.addAllCategoryService = async (data) => {
 }
 
 // get all show category service
-exports.getShowCategoryServices = async () => {
-  const category = await Category.find({ status: 'Show' }).sort({ createdAt: -1 }).populate('products');
+exports.getShowCategoryServices = async (filter = { status: 'Show' }) => {
+  const category = await Category.find(filter)
+    .sort({ createdAt: -1 })
+    .populate('products');
   return category;
 }
 
 // get all category 
 exports.getAllCategoryServices = async () => {
-  const category = await Category.find({})
-    .sort({ createdAt: -1 })
+  const category = await Category.find({}).sort({ createdAt: -1 });
   return category;
 }
 // Service method
 // Service method
-exports.getWebCategoryServices = async () => {
+exports.getWebCategoryServices = async (jewelleryType = 'all_fine') => {
   const categories = await Category.aggregate([
     {
-      $match: { status: 'Show' } // Only show categories with status 'Show'
+      $match: { status: 'Show', jewellery_type: jewelleryType }
     },
     {
       $lookup: {
@@ -79,6 +80,7 @@ exports.getWebCategoryServices = async () => {
         _id: 1,
         img: '$category_image', // Map category_image to img
         parent: '$category_name', // Map category_name to parent
+        jewellery_type: { $ifNull: ['$jewellery_type', 'all_fine'] },
         children: [], // Empty array as your model doesn't have children
         productType: 'jewellery', // Hardcoded as your products are jewellery
         products: {
