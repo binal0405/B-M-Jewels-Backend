@@ -174,6 +174,7 @@ exports.getWebProductsService = async () => {
       discount: product.discount,
       tags: [product.metal_type ? product.metal_type.metal_name : null, product.purity ? product.purity.purity_value : null].filter(Boolean),
       status: product.status,
+      show_price: product.show_price,
     };
   });
 
@@ -501,6 +502,7 @@ exports.searchWebProductsService = async (searchText) => {
         discount: product.discount,
         tags: [product.metal_type ? product.metal_type.metal_name : null, product.purity ? product.purity.purity_value : null].filter(Boolean),
         status: product.status,
+        show_price: product.show_price,
       };
     });
   } catch (error) {

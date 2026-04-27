@@ -29,6 +29,7 @@ const productSchema = new mongoose.Schema({
     price_is_fixed: { type: Boolean, default: true },
     reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }],
     averageRating: { type: Number, default: 0 },
+    show_price: { type: Boolean, default: true },
 }, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } });
 
 

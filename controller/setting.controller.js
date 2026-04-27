@@ -98,13 +98,23 @@ exports.updateSettingsByNames = async (req, res) => {
 
         const updates = [];
 
-        // Update string values from req.body
+        // Update or create string values from req.body
         for (const [key, value] of Object.entries(req.body)) {
             if (nameToSetting[key]) {
                 updates.push({
-                    id: nameToSetting[key]._id || nameToSetting[key].id,  // depending on your DB
+                    id: nameToSetting[key]._id || nameToSetting[key].id,
                     value: value,
                 });
+            } else {
+                // Create if not exists
+                const newSetting = await settingService.createSetting({
+                    name: key,
+                    value: value,
+                    type: 'text',
+                    group: 'general'
+                });
+                // No need to add to updates as it's already created, 
+                // but we might want to refresh nameToSetting or just skip
             }
         }
 
