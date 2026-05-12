@@ -362,11 +362,21 @@ exports.updateProductService = async (id, updatedData, files) => {
       throw new Error("Product not found");
     }
 
-    // Handle product images (keep existing if none provided)
-    let product_images = product.product_images || [];
-    if (files && files.length > 0) {
-      product_images = files.map((file) => multerFileToPublicRelativePath(file));
+    // Handle product images: merge existing paths (from body) and new uploads (from files)
+    let existing_images = [];
+    if (updatedData.product_images) {
+      existing_images = Array.isArray(updatedData.product_images)
+        ? updatedData.product_images
+        : [updatedData.product_images];
     }
+
+    let new_images = [];
+    if (files && files.length > 0) {
+      new_images = files.map((file) => multerFileToPublicRelativePath(file));
+    }
+
+    // Combined set of images
+    const product_images = [...existing_images, ...new_images];
 
     // Update the product_images field in the updatedData
     updatedData.product_images = product_images;
