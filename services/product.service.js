@@ -151,7 +151,7 @@ exports.getWebProductsService = async () => {
       },
     })
     .populate("promo_type")
-    .populate("category", "category_name") // Select only category_name
+    .populate("category", "category_name jewellery_type") // Select category_name and jewellery_type
     .populate("metal_type", "metal_name") // Select only metal_name
     .populate("purity", "purity_value") // Select only purity_value
     .exec();
@@ -175,6 +175,7 @@ exports.getWebProductsService = async () => {
       tags: [product.metal_type ? product.metal_type.metal_name : null, product.purity ? product.purity.purity_value : null].filter(Boolean),
       status: product.status,
       show_price: product.show_price,
+      jewellery_type: product.jewellery_type || (product.category ? product.category.jewellery_type : 'all_fine'),
     };
   });
 
@@ -491,7 +492,7 @@ exports.searchWebProductsService = async (searchText) => {
         },
       })
       .populate("promo_type")
-      .populate("category", "category_name")
+      .populate("category", "category_name jewellery_type")
       .populate("metal_type", "metal_name")
       .populate("purity", "purity_value")
       .exec();
@@ -513,6 +514,7 @@ exports.searchWebProductsService = async (searchText) => {
         tags: [product.metal_type ? product.metal_type.metal_name : null, product.purity ? product.purity.purity_value : null].filter(Boolean),
         status: product.status,
         show_price: product.show_price,
+        jewellery_type: product.jewellery_type || (product.category ? product.category.jewellery_type : 'all_fine'),
       };
     });
   } catch (error) {

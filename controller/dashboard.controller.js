@@ -15,6 +15,10 @@ exports.getDashboardData = async (req, res, next) => {
                 category_image: category.category_image ? `${process.env.ADMIN_URL}${category.category_image}` : null,
                 productCount: category.products.length,
             })),
+            nineCaratCategories: data.nineCaratCategories.map(category => ({
+                ...category.toObject(),
+                category_image: category.category_image ? `${process.env.ADMIN_URL}${category.category_image}` : null,
+            })),
             products: data.products.map(product => ({
                 ...product.toObject(),
                 product_images: product.product_images.map(img => `${process.env.ADMIN_URL}${img}`),

@@ -15,9 +15,9 @@ const upload = multer({ storage: storage });
 const JEWELLERY_TYPES = ['all_fine', '9_carat'];
 
 function normalizeJewelleryType(value) {
-  const v = typeof value === 'string' ? value.trim() : '';
-  if (JEWELLERY_TYPES.includes(v)) return v;
-  return 'all_fine';
+    const v = typeof value === 'string' ? value.trim() : '';
+    if (JEWELLERY_TYPES.includes(v)) return v;
+    return 'all_fine';
 }
 
 // Add category
@@ -209,11 +209,7 @@ exports.getAllCategory = async (req, res, next) => {
 exports.getWebCategory = async (req, res, next) => {
     try {
         const { jewellery_type } = req.query;
-        const jt = (jewellery_type === 'all_fine' || jewellery_type === '9_carat')
-            ? jewellery_type
-            : 'all_fine';
-
-        const categories = await categoryServices.getWebCategoryServices(jt);
+        const categories = await categoryServices.getWebCategoryServices(jewellery_type);
 
         // Format image URLs with ADMIN_URL if needed
         const formattedCategories = categories.map(category => ({

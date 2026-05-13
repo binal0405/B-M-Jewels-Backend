@@ -41,10 +41,14 @@ exports.getAllCategoryServices = async () => {
 }
 // Service method
 // Service method
-exports.getWebCategoryServices = async (jewelleryType = 'all_fine') => {
+exports.getWebCategoryServices = async (jewelleryType) => {
+  const matchStage = { status: 'Show' };
+  if (jewelleryType && jewelleryType !== 'all') {
+    matchStage.jewellery_type = jewelleryType;
+  }
   const categories = await Category.aggregate([
     {
-      $match: { status: 'Show', jewellery_type: jewelleryType }
+      $match: matchStage
     },
     {
       $lookup: {
