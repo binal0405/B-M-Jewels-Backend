@@ -2,11 +2,12 @@ const express = require('express');
 const router = express.Router();
 // internal
 const contactusController = require('../controller/contactus.controller.js');
+const upload = require('../config/multerConfig');
 
 // get
 router.get('/get/:id', contactusController.getSingleContactus);
 // add
-router.post('/add', contactusController.addContactus);
+router.post('/add', upload.array('images', 3), contactusController.addContactus);
 // add All Contactus
 router.post('/add-all', contactusController.addAllContactus);
 // get all Contactus
