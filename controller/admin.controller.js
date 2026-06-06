@@ -62,7 +62,9 @@ const getAdminProfile = async (req, res) => {
         message: "Admin not found"
       });
     }
-    admin.image = `${process.env.ADMIN_URL}${admin.image}`; // Adjust based on your server setup
+    if (admin.image) {
+      admin.image = (admin.image.startsWith("http://") || admin.image.startsWith("https://")) ? admin.image : `${process.env.ADMIN_URL}${admin.image}`;
+    }
 
     res.status(200).json({
       status: true,
@@ -94,7 +96,7 @@ const updateAdminProfile = async (req, res) => {
     };
 
     if (req.file) {
-      updateFields.image = `images/${req.file.filename}`; // adjust path based on how you serve public folder
+      updateFields.image = (req.file.filename.startsWith("http://") || req.file.filename.startsWith("https://")) ? req.file.filename : `images/${req.file.filename}`;
     }
 
     const updatedAdmin = await Admin.findByIdAndUpdate(

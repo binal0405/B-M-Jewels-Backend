@@ -34,8 +34,14 @@ exports.getAllSettings = async (req, res) => {
 
         const formatted = settings.map(setting => {
             const isImage = setting.type === 'image';
+            let formattedValue = setting.value;
+            if (isImage && setting.value) {
+                if (!setting.value.startsWith('http://') && !setting.value.startsWith('https://')) {
+                    formattedValue = `${baseUrl}images/${setting.value}`;
+                }
+            }
             return {
-                ...setting.toObject(), value: isImage ? `${baseUrl}images/${setting.value}` : setting.value
+                ...setting.toObject(), value: formattedValue
             };
         });
 

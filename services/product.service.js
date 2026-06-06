@@ -59,9 +59,12 @@ exports.createProductService = async (productData) => {
 
     // Normalize product images paths
     if (productData.product_images && Array.isArray(productData.product_images)) {
-      productData.product_images = productData.product_images.map(imgPath =>
-        path.posix.normalize(imgPath.replace(/\\/g, "/"))
-      );
+      productData.product_images = productData.product_images.map(imgPath => {
+        if (typeof imgPath === "string" && (imgPath.startsWith("http://") || imgPath.startsWith("https://"))) {
+          return imgPath;
+        }
+        return path.posix.normalize(imgPath.replace(/\\/g, "/"));
+      });
     }
 
     // Create the product

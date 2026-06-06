@@ -12,7 +12,7 @@ const ContactusSchema = mongoose.Schema({
     },
     subject: {
         type: String,
-        required: false,
+        required: true,
     },
     mobile: {
         type: String,
@@ -25,19 +25,11 @@ const ContactusSchema = mongoose.Schema({
     },
     message: {
         type: String,
-        required: false,
-    },
-    remark: {
-        type: String,
-        required: false,
-    },
-    images: {
-        type: [String],
-        default: [],
+        required: true,
     },
     remember: {
         type: Boolean,
-        required: false,
+        required: true,
     },
     status: {
         type: String,

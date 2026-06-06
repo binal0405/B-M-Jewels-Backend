@@ -3,11 +3,7 @@ const contactusServices = require("../services/contactus.service.js");
 
 exports.addContactus = async (req, res, next) => {
     try {
-        const data = { ...req.body };
-        if (req.files && req.files.length > 0) {
-            data.images = req.files.map(file => `/images/${file.filename}`);
-        }
-        const result = await contactusServices.createContactusService(data);
+        const result = await contactusServices.createContactusService(req.body);
         res.status(201).json({
             status: "success",
             message: "Contactus created successfully!",
