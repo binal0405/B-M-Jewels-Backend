@@ -5,8 +5,10 @@ const { cloudinaryServices } = require("../services/cloudinary.service");
 const saveImageCloudinary = async (req, res,next) => {
   // console.log(req.file)
   try {
+    const folder = req.query.folder || req.body.folder || "BMJEWELS";
     const result = await cloudinaryServices.cloudinaryImageUpload(
-      req.file.buffer
+      req.file.buffer,
+      folder
     );
     res.status(200).json({
       success: true,
@@ -23,21 +25,25 @@ const saveImageCloudinary = async (req, res,next) => {
 const addMultipleImageCloudinary = async (req, res) => {
   try {
     const files = req.files;
+    const folder = req.query.folder || req.body.folder || "BMJEWELS";
 
     // Array to store Cloudinary image upload responses
     const uploadResults = [];
 
     for (const file of files) {
-      // Upload image to Cloudinary
-      const result = await cloudinaryServices.cloudinaryImageUpload(file.path);
+      // Upload image to Cloudinary (buffer if memory storage, path if disk storage)
+      const dataInput = file.buffer || file.path;
+      const result = await cloudinaryServices.cloudinaryImageUpload(dataInput, folder);
 
       // Store the Cloudinary response in the array
       uploadResults.push(result);
     }
 
-    // Delete temporary local files
+    // Delete temporary local files if they exist on disk
     for (const file of files) {
-      fs.unlinkSync(file.path);
+      if (file.path && fs.existsSync(file.path)) {
+        fs.unlinkSync(file.path);
+      }
     }
 
     res.status(200).json({

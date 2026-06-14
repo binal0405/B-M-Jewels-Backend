@@ -11,29 +11,44 @@ const { Readable } = require('stream');
 //   return uploadRes;
 // };
 
-const cloudinaryImageUpload = (imageBuffer) => {
+const cloudinaryImageUpload = (imageInput, folderName = "BMJEWELS") => {
   return new Promise((resolve, reject) => {
-    const options = {};
+    const options = {
+      folder: folderName,
+    };
     if (secret.cloudinary_upload_preset) {
       options.upload_preset = secret.cloudinary_upload_preset;
     }
-    const uploadStream = cloudinary.uploader.upload_stream(
-      options,
-      (error, result) => {
+
+    if (Buffer.isBuffer(imageInput)) {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        options,
+        (error, result) => {
+          if (error) {
+            console.error('Error uploading to Cloudinary stream:', error);
+            reject(error);
+          } else {
+            resolve(result);
+          }
+        }
+      );
+
+      const bufferStream = new Readable();
+      bufferStream.push(imageInput);
+      bufferStream.push(null);
+
+      bufferStream.pipe(uploadStream);
+    } else {
+      // If it is a file path or URL string
+      cloudinary.uploader.upload(imageInput, options, (error, result) => {
         if (error) {
           console.error('Error uploading to Cloudinary:', error);
           reject(error);
         } else {
           resolve(result);
         }
-      }
-    );
-
-    const bufferStream = new Readable();
-    bufferStream.push(imageBuffer);
-    bufferStream.push(null);
-
-    bufferStream.pipe(uploadStream);
+      });
+    }
   });
 };
 
