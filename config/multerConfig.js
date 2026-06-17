@@ -1,7 +1,9 @@
 // config/multerConfig.js
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const { cloudinaryServices } = require('../services/cloudinary.service');
+const { secret } = require('./secret');
 
 const storage = multer.memoryStorage();
 
@@ -37,6 +39,8 @@ const getFolderName = (req, file) => {
         folder = "BMJEWELS/product";
     } else if (fieldname === "banner_image" || path.includes("/banner")) {
         folder = "BMJEWELS/banner";
+    } else if (fieldname === "feed_image" || path.includes("/image-feed")) {
+        folder = "BMJEWELS/image-feed";
     }
     return folder;
 };
@@ -52,13 +56,13 @@ const cloudinaryUpload = async (req, res, next) => {
         if (req.files) {
             if (Array.isArray(req.files)) {
                 for (const file of req.files) {
-                    const folder = getFolderName(req, file);
-                    const result = await cloudinaryServices.cloudinaryImageUpload(file.buffer, folder);
-                    file.filename = result.secure_url;
-                    file.path = result.secure_url;
+    const folder = getFolderName(req, file);
+    const result = await cloudinaryServices.cloudinaryImageUpload(file.buffer, folder);
+    file.filename = result.secure_url;
+    file.path = result.secure_url;
                 }
-            } else {
-                for (const field of Object.keys(req.files)) {
+        } else {
+            for (const field of Object.keys(req.files)) {
                     for (const file of req.files[field]) {
                         const folder = getFolderName(req, file);
                         const result = await cloudinaryServices.cloudinaryImageUpload(file.buffer, folder);

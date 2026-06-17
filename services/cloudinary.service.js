@@ -11,6 +11,16 @@ const { Readable } = require('stream');
 //   return uploadRes;
 // };
 
+const toUploadError = (error) => {
+  if (error instanceof Error) return error;
+  if (error && typeof error === "object" && error.message) {
+    const err = new Error(error.message);
+    if (error.http_code) err.http_code = error.http_code;
+    return err;
+  }
+  return new Error(String(error));
+};
+
 const cloudinaryImageUpload = (imageInput, folderName = "BMJEWELS") => {
   return new Promise((resolve, reject) => {
     const options = {
@@ -26,7 +36,7 @@ const cloudinaryImageUpload = (imageInput, folderName = "BMJEWELS") => {
         (error, result) => {
           if (error) {
             console.error('Error uploading to Cloudinary stream:', error);
-            reject(error);
+            reject(toUploadError(error));
           } else {
             resolve(result);
           }
@@ -43,7 +53,7 @@ const cloudinaryImageUpload = (imageInput, folderName = "BMJEWELS") => {
       cloudinary.uploader.upload(imageInput, options, (error, result) => {
         if (error) {
           console.error('Error uploading to Cloudinary:', error);
-          reject(error);
+          reject(toUploadError(error));
         } else {
           resolve(result);
         }

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect, adminOnly } = require("../middleware/authMiddleware.js");
+const { protect, adminOnly, isAuth } = require("../middleware/authMiddleware.js");
 const settingController = require('../controller/setting.controller');
 // const upload = require('../middlewares/upload')('settings', 'setting');
 const upload = require("../config/multerConfig");
@@ -11,6 +11,8 @@ router.delete('/:id', settingController.deleteSetting);
 
 // For admin panel frontend
 router.get('/', settingController.getAllSettings);
+router.get('/scheme-names', settingController.getSchemeNames);
+router.put('/scheme-names', isAuth, settingController.updateSchemeNames);
 // router.put('/update-values', upload.single('value'),settingController.updateSettingsByIds);
 router.put('/update-values', protect, upload.fields([
     { name: 'logo', maxCount: 1 },

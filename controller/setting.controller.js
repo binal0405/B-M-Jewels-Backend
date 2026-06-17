@@ -154,6 +154,54 @@ exports.updateSettingsByNames = async (req, res) => {
 
 
 
+exports.getSchemeNames = async (req, res) => {
+    try {
+        const raw = await settingService.getSettingByKey('scheme_names');
+        let names = [];
+        if (raw) {
+            try {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) {
+                    names = parsed.filter((name) => typeof name === 'string' && name.trim());
+                }
+            } catch (err) {
+                names = [];
+            }
+        }
+        res.status(200).json({ status: true, data: names });
+    } catch (err) {
+        res.status(500).json({ status: false, message: err.message });
+    }
+};
+
+exports.updateSchemeNames = async (req, res) => {
+    try {
+        const { names } = req.body;
+        if (!Array.isArray(names)) {
+            return res.status(400).json({ status: false, message: 'Names must be an array' });
+        }
+
+        const cleaned = names
+            .map((name) => (typeof name === 'string' ? name.trim() : ''))
+            .filter(Boolean);
+
+        await settingService.upsertSettingByName({
+            name: 'scheme_names',
+            value: JSON.stringify(cleaned),
+            group: 'scheme',
+            desc: 'Gold scheme names for dropdown',
+        });
+
+        res.status(200).json({
+            status: true,
+            message: 'Scheme names updated successfully',
+            data: cleaned,
+        });
+    } catch (err) {
+        res.status(500).json({ status: false, message: err.message });
+    }
+};
+
 exports.deleteSetting = async (req, res) => {
     try {
         await settingService.deleteSetting(req.params.id);

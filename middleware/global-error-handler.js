@@ -46,6 +46,14 @@ const globalErrorHandler = (error, req, res, next) => {
         },
       ]
       : []
+  } else if (error && typeof error === 'object' && error.message) {
+    message = error.message
+    errorMessages = [
+      {
+        path: '',
+        message: error.message,
+      },
+    ]
   }
 
   res.status(statusCode).json({

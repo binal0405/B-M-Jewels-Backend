@@ -29,3 +29,11 @@ exports.getSettingByKey = async (key) => {
     const setting = await Setting.findOne({ name: key });
     return setting?.value || null;
 };
+
+exports.upsertSettingByName = async ({ name, value, type = 'text', group = 'general', desc = '' }) => {
+    return Setting.findOneAndUpdate(
+        { name },
+        { name, value, type, group, desc, status: true },
+        { upsert: true, new: true }
+    );
+};
