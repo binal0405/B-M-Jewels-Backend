@@ -1,4 +1,5 @@
 const dashboardService = require('../services/dashboard.service');
+const { resolvePublicImageUrl } = require('../utils/multer-public-path');
 
 exports.getDashboardData = async (req, res, next) => {
     try {
@@ -8,24 +9,24 @@ exports.getDashboardData = async (req, res, next) => {
         const formattedData = {
             banners: data.banners.map(banner => ({
                 ...banner.toObject(),
-                banner_image: banner.banner_image ? `${process.env.ADMIN_URL}${banner.banner_image}` : null,
+                banner_image: resolvePublicImageUrl(banner.banner_image),
             })),
             categories: data.categories.map(category => ({
                 ...category.toObject(),
-                category_image: category.category_image ? `${process.env.ADMIN_URL}${category.category_image}` : null,
+                category_image: resolvePublicImageUrl(category.category_image),
                 productCount: category.products.length,
             })),
             nineCaratCategories: data.nineCaratCategories.map(category => ({
                 ...category.toObject(),
-                category_image: category.category_image ? `${process.env.ADMIN_URL}${category.category_image}` : null,
+                category_image: resolvePublicImageUrl(category.category_image),
             })),
             products: data.products.map(product => ({
                 ...product.toObject(),
-                product_images: product.product_images.map(img => `${process.env.ADMIN_URL}${img}`),
+                product_images: product.product_images.map((img) => resolvePublicImageUrl(img)),
                 category: product.category ? {
                     _id: product.category._id,
                     category_name: product.category.category_name,
-                    category_image: product.category.category_image ? `${process.env.ADMIN_URL}${product.category.category_image}` : null,
+                    category_image: resolvePublicImageUrl(product.category.category_image),
                 } : null,
             })),
             stats: data.stats,
@@ -35,7 +36,7 @@ exports.getDashboardData = async (req, res, next) => {
             profile: {
                 name: data.adminProfile?.name || '',
                 email: data.adminProfile?.email || '',
-                profile_image: data.adminProfile?.profile_image ? `${process.env.ADMIN_URL}${data.adminProfile.profile_image}` : null,
+                profile_image: resolvePublicImageUrl(data.adminProfile?.profile_image),
             }
         };
 

@@ -7,7 +7,7 @@ const Color = require("../model/Color.js");
 const Rate = require("../model/Rate.js");
 const mongoose = require("mongoose");
 const path = require("path");
-const { multerFileToPublicRelativePath } = require("../utils/multer-public-path");
+const { multerFileToPublicRelativePath, resolvePublicImageUrl } = require("../utils/multer-public-path");
 
 exports.createProductService = async (productData) => {
   try {
@@ -166,9 +166,7 @@ exports.getWebProductsService = async () => {
     // product_images: product.product_images,
     return {
       _id: product._id,
-      product_images: product.product_images.map(
-        (img) => `${process.env.ADMIN_URL}${img}`
-      ),
+      product_images: product.product_images.map((img) => resolvePublicImageUrl(img)),
       category: product.category ? product.category.category_name : null,
       product_name: product.product_name,
       about_this_item: product.about_this_item,
@@ -459,9 +457,7 @@ exports.searchProductsService = async (searchText) => {
       ...product.toObject(),
       price: product.price,
       averageRating: product.averageRating,
-      product_images: product.product_images.map(
-        (img) => `${process.env.ADMIN_URL}${img}`
-      ),
+      product_images: product.product_images.map((img) => resolvePublicImageUrl(img)),
     }));
   } catch (error) {
     throw error;
@@ -505,9 +501,7 @@ exports.searchWebProductsService = async (searchText) => {
 
       return {
         _id: product._id,
-        product_images: product.product_images.map(
-          (img) => `${process.env.ADMIN_URL}${img}`
-        ),
+        product_images: product.product_images.map((img) => resolvePublicImageUrl(img)),
         category: product.category ? product.category.category_name : null,
         product_name: product.product_name,
         about_this_item: product.about_this_item,

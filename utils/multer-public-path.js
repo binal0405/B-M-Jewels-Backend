@@ -26,4 +26,15 @@ function multerFileToPublicRelativePath(file) {
   return rel.split(path.sep).join('/');
 }
 
-module.exports = { multerFileToPublicRelativePath };
+function resolvePublicImageUrl(imagePath, baseUrl = process.env.ADMIN_URL || '') {
+  if (!imagePath) return null;
+  if (typeof imagePath !== 'string') return imagePath;
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
+  const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
+  return `${cleanBase}${cleanPath}`;
+}
+
+module.exports = { multerFileToPublicRelativePath, resolvePublicImageUrl };
