@@ -63,8 +63,11 @@ productSchema.methods.getBaseRate = async function () {
 productSchema.methods.getEffectiveRate = async function () {
     const baseRate = await this.getBaseRate();
 
-    // For non-gold metals, return base rate as purity doesn't affect price
-    if (this.metal_type.metal_name.toLowerCase() !== 'gold') {
+    // Check if the metal is gold-related (Gold, Rose Gold, White Gold)
+    const metalName = this.metal_type.metal_name.toLowerCase();
+    const isGoldRelated = metalName.includes('gold');
+
+    if (!isGoldRelated) {
         return baseRate;
     }
 
@@ -76,48 +79,22 @@ productSchema.methods.getEffectiveRate = async function () {
     await this.populate('purity');
     console.log("Purity:", this.purity.product_purity); // Debugging
 
-    const purityFactor = parseFloat((this.purity.product_purity / 24).toFixed(2)); // Assuming 24k is standard
-    // const purityFactor = baseRate * (this.purity.product_purity / 24); // Assuming 24k is standard
+    // Carat to purity factor mapping
+    const purityMapping = {
+        24: 1.00,
+        22: 0.916,
+        18: 0.76, // 18K purity updated to 76% as requested
+        14: 0.60,
+        9: 0.40
+    };
+
+    const carat = this.purity.product_purity;
+    const purityFactor = purityMapping[carat] !== undefined 
+        ? purityMapping[carat] 
+        : parseFloat((carat / 24).toFixed(2));
+
     return baseRate * purityFactor;
 };
-
-/*
-productSchema.methods.getEffectiveRate = async function () {
-    const baseRate = await this.getBaseRate();
-
-    const metalName = this.metal_type.metal_name.toLowerCase();
-
-    // For gold, calculate based on purity
-    if (metalName.toLowerCase() === 'gold') {
-        if (!this.purity) {
-            throw new Error("Purity is required for gold products");
-        }
-
-        await this.populate('purity');
-        const purityFactor = parseFloat((this.purity.product_purity / 24).toFixed(2)); // 24k standard
-        return baseRate * purityFactor;
-    }
-
-    // For silver, use purity if provided (usually 999 or 925)
-    if (metalName.toLowerCase() === 'silver') {
-        if (!this.purity) return baseRate; // Assume base rate is for pure silver
-        await this.populate('purity');
-        const purityFactor = parseFloat((this.purity.product_purity / 1000).toFixed(3)); // Silver is out of 1000
-        return baseRate * purityFactor;
-    }
-
-    // For platinum, usually 950 purity
-    if (metalName.toLowerCase() === 'platinum') {
-        if (!this.purity) return baseRate; // Assume base rate is for 950 purity
-        await this.populate('purity');
-        const purityFactor = parseFloat((this.purity.product_purity / 1000).toFixed(3)); // Platinum purity also out of 1000
-        return baseRate * purityFactor;
-    }
-
-    // Fallback
-    return baseRate;
-};
-*/
 
 /**
  * **Method to calculate material cost**
@@ -163,20 +140,29 @@ productSchema.methods.getDiscountedMakingCharges = async function () {
 
 /**
  * **Method to calculate final price after tax**
+ * Formula based on specification:
+ * Subtotal = Gold Value (materialCost) + Making Charges (discountedMakingCharges) + Additional Cost (hallmark + additional + other charges)
+ * Final Price = Subtotal + 3% GST
  */
 productSchema.methods.getFinalPrice = async function () {
     try {
         const materialCost = await this.getMaterialCost();
         const discountedMakingCharges = await this.getDiscountedMakingCharges();
 
-        // Tax calculation
-        const taxOnMaterial = materialCost * 0.03; // 3% tax on material cost
-        const taxOnMakingCharges = discountedMakingCharges * 0.05; // 5% tax on making charges
+        // Additional Cost components
         const hall_mark_charges = this.hall_mark_charges || 0;
         const additional_charges = this.additional_charges || 0;
+        const other_charges = this.other_charges || 0;
+        const additionalCost = hall_mark_charges + additional_charges + other_charges;
+
+        // Subtotal = Gold Value + Making Charges + Additional Cost
+        const subtotal = materialCost + discountedMakingCharges + additionalCost;
+
+        // GST is 3% of Subtotal
+        const gst = subtotal * 0.03;
 
         // Final price
-        const finalPrice = materialCost + discountedMakingCharges + taxOnMaterial + taxOnMakingCharges;
+        const finalPrice = subtotal + gst;
 
         return finalPrice;
     } catch (error) {
@@ -190,8 +176,8 @@ productSchema.methods.getFinalPrice = async function () {
  */
 productSchema.pre("save", async function (next) {
     try {
-        // Skip calculation if price was explicitly set
-        if (!this.forcePriceCalculation && this.price !== undefined && this.price !== null && this.price !== 0) {
+        // Skip calculation if price was explicitly set (only for fixed price products)
+        if (!this.forcePriceCalculation && this.price_is_fixed && this.price !== undefined && this.price !== null && this.price !== 0) {
             return next();
         }
 
