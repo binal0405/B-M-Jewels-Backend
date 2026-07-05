@@ -11,6 +11,11 @@ const CategorySchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  jewellery_type: {
+    type: String,
+    enum: ['all_fine', '9_carat'],
+    default: 'all_fine',
+  },
   status: {
     type: String,
     enum: ['Show', 'Hide'],

@@ -34,8 +34,14 @@ exports.getAllSettings = async (req, res) => {
 
         const formatted = settings.map(setting => {
             const isImage = setting.type === 'image';
+            let formattedValue = setting.value;
+            if (isImage && setting.value) {
+                if (!setting.value.startsWith('http://') && !setting.value.startsWith('https://')) {
+                    formattedValue = `${baseUrl}images/${setting.value}`;
+                }
+            }
             return {
-                ...setting.toObject(), value: isImage ? `${baseUrl}images/${setting.value}` : setting.value
+                ...setting.toObject(), value: formattedValue
             };
         });
 
@@ -98,13 +104,23 @@ exports.updateSettingsByNames = async (req, res) => {
 
         const updates = [];
 
-        // Update string values from req.body
+        // Update or create string values from req.body
         for (const [key, value] of Object.entries(req.body)) {
             if (nameToSetting[key]) {
                 updates.push({
-                    id: nameToSetting[key]._id || nameToSetting[key].id,  // depending on your DB
+                    id: nameToSetting[key]._id || nameToSetting[key].id,
                     value: value,
                 });
+            } else {
+                // Create if not exists
+                const newSetting = await settingService.createSetting({
+                    name: key,
+                    value: value,
+                    type: 'text',
+                    group: 'general'
+                });
+                // No need to add to updates as it's already created, 
+                // but we might want to refresh nameToSetting or just skip
             }
         }
 
@@ -137,6 +153,54 @@ exports.updateSettingsByNames = async (req, res) => {
 };
 
 
+
+exports.getSchemeNames = async (req, res) => {
+    try {
+        const raw = await settingService.getSettingByKey('scheme_names');
+        let names = [];
+        if (raw) {
+            try {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) {
+                    names = parsed.filter((name) => typeof name === 'string' && name.trim());
+                }
+            } catch (err) {
+                names = [];
+            }
+        }
+        res.status(200).json({ status: true, data: names });
+    } catch (err) {
+        res.status(500).json({ status: false, message: err.message });
+    }
+};
+
+exports.updateSchemeNames = async (req, res) => {
+    try {
+        const { names } = req.body;
+        if (!Array.isArray(names)) {
+            return res.status(400).json({ status: false, message: 'Names must be an array' });
+        }
+
+        const cleaned = names
+            .map((name) => (typeof name === 'string' ? name.trim() : ''))
+            .filter(Boolean);
+
+        await settingService.upsertSettingByName({
+            name: 'scheme_names',
+            value: JSON.stringify(cleaned),
+            group: 'scheme',
+            desc: 'Gold scheme names for dropdown',
+        });
+
+        res.status(200).json({
+            status: true,
+            message: 'Scheme names updated successfully',
+            data: cleaned,
+        });
+    } catch (err) {
+        res.status(500).json({ status: false, message: err.message });
+    }
+};
 
 exports.deleteSetting = async (req, res) => {
     try {

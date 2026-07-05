@@ -10,11 +10,25 @@ const mongoose = require('mongoose');
 // sign up
 exports.signup = async (req, res, next) => {
   try {
-    const user = await User.findOne({ email: req.body.email });
+    const { name, email, password, phone } = req.body;
+
+    if (!phone || String(phone).trim().length < 10) {
+      return res.status(400).json({
+        status: "fail",
+        message: "A valid mobile number is required",
+      });
+    }
+
+    const user = await User.findOne({ email });
     if (user) {
       res.send({ status: "failed", message: "Email already exists" });
     } else {
-      const saved_user = await User.create(req.body);
+      const saved_user = await User.create({
+        name,
+        email,
+        password,
+        phone: String(phone).trim(),
+      });
       const token = saved_user.generateConfirmationToken();
 
       await saved_user.save({ validateBeforeSave: false });

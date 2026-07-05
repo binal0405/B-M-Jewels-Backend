@@ -22,6 +22,8 @@ const categoryRoutes = require("./routes/category.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const bannerRoutes = require("./routes/banner.routes");
 const contactusRoutes = require("./routes/contactus.routes");
+const customDesignRoutes = require("./routes/customDesign.routes");
+const productEnquiryRoutes = require("./routes/productEnquiry.routes");
 const promotypeRoutes = require("./routes/promotype.routes");
 const colorRoutes = require("./routes/color.routes");
 const purityRoutes = require("./routes/purity.routes");
@@ -38,6 +40,9 @@ const settingRoutes = require("./routes/setting.routes");
 // const loginRoutes = require("./routes/login.routes");
 const uploadRouter = require('./routes/uploadFile.routes');
 const cloudinaryRoutes = require("./routes/cloudinary.routes");
+const cartRoutes = require("./routes/cart.routes");
+const goldSchemeRoutes = require("./routes/goldScheme.routes");
+const imageFeedRoutes = require("./routes/imageFeed.routes");
 
 // middleware
 app.use(cors());
@@ -55,7 +60,8 @@ app.use("/api/category", categoryRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/banner", bannerRoutes);
 app.use("/api/contactus", contactusRoutes);
-app.use("/api/contactus", contactusRoutes);
+app.use("/api/custom-design", customDesignRoutes);
+app.use("/api/product-enquiry", productEnquiryRoutes);
 app.use("/api/promotype", promotypeRoutes);
 app.use("/api/color", colorRoutes);
 app.use("/api/purity", purityRoutes);
@@ -71,6 +77,9 @@ app.use("/api/review", reviewRoutes);
 app.use("/api/rate", rateRoutes);
 app.use("/api/cloudinary", cloudinaryRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/gold-scheme", goldSchemeRoutes);
+app.use("/api/image-feed", imageFeedRoutes);
 // app.use("/api/login", loginRoutes);
 // https://data-asg.goldprice.org/dbXRates/INR
 // root route

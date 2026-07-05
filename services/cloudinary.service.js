@@ -11,25 +11,54 @@ const { Readable } = require('stream');
 //   return uploadRes;
 // };
 
-const cloudinaryImageUpload = (imageBuffer) => {
+const toUploadError = (error) => {
+  if (error instanceof Error) return error;
+  if (error && typeof error === "object" && error.message) {
+    const err = new Error(error.message);
+    if (error.http_code) err.http_code = error.http_code;
+    return err;
+  }
+  return new Error(String(error));
+};
+
+const cloudinaryImageUpload = (imageInput, folderName = "BMJEWELS") => {
   return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { upload_preset: secret.cloudinary_upload_preset },
-      (error, result) => {
+    const options = {
+      folder: folderName,
+    };
+    if (secret.cloudinary_upload_preset) {
+      options.upload_preset = secret.cloudinary_upload_preset;
+    }
+
+    if (Buffer.isBuffer(imageInput)) {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        options,
+        (error, result) => {
+          if (error) {
+            console.error('Error uploading to Cloudinary stream:', error);
+            reject(toUploadError(error));
+          } else {
+            resolve(result);
+          }
+        }
+      );
+
+      const bufferStream = new Readable();
+      bufferStream.push(imageInput);
+      bufferStream.push(null);
+
+      bufferStream.pipe(uploadStream);
+    } else {
+      // If it is a file path or URL string
+      cloudinary.uploader.upload(imageInput, options, (error, result) => {
         if (error) {
           console.error('Error uploading to Cloudinary:', error);
-          reject(error);
+          reject(toUploadError(error));
         } else {
           resolve(result);
         }
-      }
-    );
-
-    const bufferStream = new Readable();
-    bufferStream.push(imageBuffer);
-    bufferStream.push(null);
-
-    bufferStream.pipe(uploadStream);
+      });
+    }
   });
 };
 

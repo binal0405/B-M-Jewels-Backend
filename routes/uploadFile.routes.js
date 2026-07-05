@@ -7,7 +7,7 @@ const router = express.Router();
 // routes
 // router.post('/single',uploader.single('file'),fileUpload)
 
-router.post('/single', uploader.single('file'), (req, res) => {
+router.post('/single', uploader.single('file'), uploader.cloudinaryUpload, (req, res) => {
     console.log("Uploaded file:", req.file); // Debug log
     res.status(200).json(req.file);
 });

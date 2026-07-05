@@ -5,27 +5,7 @@ const { body } = require("express-validator")
 const { isAuth } = require("../middleware/authMiddleware");
 const bcrypt = require("bcryptjs");
 
-const fs = require('fs');
-const path = require('path');
-const multer = require('multer');
-
-const uploadDir = path.join(__dirname, '../public/images');
-
-// Ensure the directory exists
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
-});
-
-const upload = multer({ storage });
+const upload = require('../config/multerConfig');
 
 
 const {
@@ -91,7 +71,7 @@ router.delete("/:id", deleteStaff);
 
 // Routes
 router.get('/profile/:id', getAdminProfile);
-router.put('/profile/:id', upload.single('image'), updateAdminProfile);
+router.put('/profile/:id', upload.single('image'), upload.cloudinaryUpload, updateAdminProfile);
 
 
 // routeer.get("/admin", getAdmin);

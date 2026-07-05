@@ -7,7 +7,7 @@ const Color = require("../model/Color.js");
 const Rate = require("../model/Rate.js");
 const mongoose = require("mongoose");
 const path = require("path");
-const { multerFileToPublicRelativePath } = require("../utils/multer-public-path");
+const { multerFileToPublicRelativePath, resolvePublicImageUrl } = require("../utils/multer-public-path");
 
 exports.createProductService = async (productData) => {
   try {
@@ -59,9 +59,12 @@ exports.createProductService = async (productData) => {
 
     // Normalize product images paths
     if (productData.product_images && Array.isArray(productData.product_images)) {
-      productData.product_images = productData.product_images.map(imgPath =>
-        path.posix.normalize(imgPath.replace(/\\/g, "/"))
-      );
+      productData.product_images = productData.product_images.map(imgPath => {
+        if (typeof imgPath === "string" && (imgPath.startsWith("http://") || imgPath.startsWith("https://"))) {
+          return imgPath;
+        }
+        return path.posix.normalize(imgPath.replace(/\\/g, "/"));
+      });
     }
 
     // Create the product
@@ -151,7 +154,7 @@ exports.getWebProductsService = async () => {
       },
     })
     .populate("promo_type")
-    .populate("category", "category_name") // Select only category_name
+    .populate("category", "category_name jewellery_type") // Select category_name and jewellery_type
     .populate("metal_type", "metal_name") // Select only metal_name
     .populate("purity", "purity_value") // Select only purity_value
     .exec();
@@ -163,9 +166,7 @@ exports.getWebProductsService = async () => {
     // product_images: product.product_images,
     return {
       _id: product._id,
-      product_images: product.product_images.map(
-        (img) => `${process.env.ADMIN_URL}${img}`
-      ),
+      product_images: product.product_images.map((img) => resolvePublicImageUrl(img)),
       category: product.category ? product.category.category_name : null,
       product_name: product.product_name,
       about_this_item: product.about_this_item,
@@ -174,6 +175,8 @@ exports.getWebProductsService = async () => {
       discount: product.discount,
       tags: [product.metal_type ? product.metal_type.metal_name : null, product.purity ? product.purity.purity_value : null].filter(Boolean),
       status: product.status,
+      show_price: product.show_price,
+      jewellery_type: product.jewellery_type || (product.category ? product.category.jewellery_type : 'all_fine'),
     };
   });
 
@@ -361,11 +364,21 @@ exports.updateProductService = async (id, updatedData, files) => {
       throw new Error("Product not found");
     }
 
-    // Handle product images (keep existing if none provided)
-    let product_images = product.product_images || [];
-    if (files && files.length > 0) {
-      product_images = files.map((file) => multerFileToPublicRelativePath(file));
+    // Handle product images: merge existing paths (from body) and new uploads (from files)
+    let existing_images = [];
+    if (updatedData.product_images) {
+      existing_images = Array.isArray(updatedData.product_images)
+        ? updatedData.product_images
+        : [updatedData.product_images];
     }
+
+    let new_images = [];
+    if (files && files.length > 0) {
+      new_images = files.map((file) => multerFileToPublicRelativePath(file));
+    }
+
+    // Combined set of images
+    const product_images = [...existing_images, ...new_images];
 
     // Update the product_images field in the updatedData
     updatedData.product_images = product_images;
@@ -444,9 +457,7 @@ exports.searchProductsService = async (searchText) => {
       ...product.toObject(),
       price: product.price,
       averageRating: product.averageRating,
-      product_images: product.product_images.map(
-        (img) => `${process.env.ADMIN_URL}${img}`
-      ),
+      product_images: product.product_images.map((img) => resolvePublicImageUrl(img)),
     }));
   } catch (error) {
     throw error;
@@ -480,7 +491,7 @@ exports.searchWebProductsService = async (searchText) => {
         },
       })
       .populate("promo_type")
-      .populate("category", "category_name")
+      .populate("category", "category_name jewellery_type")
       .populate("metal_type", "metal_name")
       .populate("purity", "purity_value")
       .exec();
@@ -490,9 +501,7 @@ exports.searchWebProductsService = async (searchText) => {
 
       return {
         _id: product._id,
-        product_images: product.product_images.map(
-          (img) => `${process.env.ADMIN_URL}${img}`
-        ),
+        product_images: product.product_images.map((img) => resolvePublicImageUrl(img)),
         category: product.category ? product.category.category_name : null,
         product_name: product.product_name,
         about_this_item: product.about_this_item,
@@ -501,6 +510,8 @@ exports.searchWebProductsService = async (searchText) => {
         discount: product.discount,
         tags: [product.metal_type ? product.metal_type.metal_name : null, product.purity ? product.purity.purity_value : null].filter(Boolean),
         status: product.status,
+        show_price: product.show_price,
+        jewellery_type: product.jewellery_type || (product.category ? product.category.jewellery_type : 'all_fine'),
       };
     });
   } catch (error) {

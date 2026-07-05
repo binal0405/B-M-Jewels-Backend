@@ -5,7 +5,7 @@ node_modules/
 .env
 .env.*
 !.env.example
-/config/secret.js
+# /config/secret.js
 
 # Logs and runtime
 logs

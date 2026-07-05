@@ -53,7 +53,7 @@ exports.getAllProducts = async (req, res, next) => {
     const updatedResult = result.map((product) => ({
       ...product,
       product_images: product.product_images.map(
-        (img) => `${baseUrl}${img}`
+        (img) => (typeof img === "string" && (img.startsWith("http://") || img.startsWith("https://"))) ? img : `${baseUrl}${img}`
       ),
     }));
 
@@ -148,7 +148,7 @@ exports.getSingleProduct = async (req, res, next) => {
     }
 
     // Modify product_images to include the full URL
-    product.product_images = product.product_images.map((img) => `${process.env.ADMIN_URL}${img}`);
+    product.product_images = product.product_images.map((img) => (typeof img === "string" && (img.startsWith("http://") || img.startsWith("https://"))) ? img : `${process.env.ADMIN_URL}${img}`);
 
     res.json(product);
   } catch (error) {
@@ -164,8 +164,12 @@ exports.getSingleWebProduct = async (req, res, next) => {
     }
 
     // Modify product_images to include the full URL
-    product.product_images = product.product_images.map((img) => `${process.env.ADMIN_URL}${img}`);
-    product.category.category_image = `${process.env.ADMIN_URL}${product.category.category_image}`;
+    product.product_images = product.product_images.map((img) => (typeof img === "string" && (img.startsWith("http://") || img.startsWith("https://"))) ? img : `${process.env.ADMIN_URL}${img}`);
+    if (product.category && product.category.category_image) {
+      product.category.category_image = (product.category.category_image.startsWith("http://") || product.category.category_image.startsWith("https://"))
+        ? product.category.category_image
+        : `${process.env.ADMIN_URL}${product.category.category_image}`;
+    }
 
     res.json(product);
   } catch (error) {
@@ -189,7 +193,9 @@ exports.getRelatedProducts = async (req, res, next) => {
     // console.log(relatedProducts[0].product_images);
     // relatedProducts[0].product_images = relatedProducts[0].product_images.map((img) => `${process.env.ADMIN_URL}${img}`);
     relatedProducts.forEach((relatedProduct) => {
-      relatedProduct.product_images = relatedProduct.product_images.map((img) => `${process.env.ADMIN_URL}${img}`);
+      if (relatedProduct.product_images) {
+        relatedProduct.product_images = relatedProduct.product_images.map((img) => (typeof img === "string" && (img.startsWith("http://") || img.startsWith("https://"))) ? img : `${process.env.ADMIN_URL}${img}`);
+      }
     })
     res.status(200).json({
       success: true,

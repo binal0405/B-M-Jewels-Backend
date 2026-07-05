@@ -12,6 +12,14 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+const JEWELLERY_TYPES = ['all_fine', '9_carat'];
+
+function normalizeJewelleryType(value) {
+    const v = typeof value === 'string' ? value.trim() : '';
+    if (JEWELLERY_TYPES.includes(v)) return v;
+    return 'all_fine';
+}
+
 // Add category
 exports.addCategory = async (req, res, next) => {
     try {
@@ -35,8 +43,13 @@ exports.addCategory = async (req, res, next) => {
         const data = {
             category_name: req.body.category_name,
             category_image: fileName, // Store only the filename
+            jewellery_type: normalizeJewelleryType(req.body.jewellery_type),
         };
-        data.category_image = 'images/' + data.category_image;
+        if (typeof data.category_image === "string" && (data.category_image.startsWith("http://") || data.category_image.startsWith("https://"))) {
+            // Leave it as is
+        } else {
+            data.category_image = 'images/' + data.category_image;
+        }
 
         const result = await categoryServices.createCategoryService(data);
         res.status(201).json({
@@ -68,14 +81,26 @@ exports.updateCategory = async (req, res, next) => {
 
         const data = { ...req.body };
 
+        if (req.body.jewellery_type !== undefined) {
+            data.jewellery_type = normalizeJewelleryType(req.body.jewellery_type);
+        }
+
         // If a new file is uploaded, update category_image
         if (req.file) {
             const fileName = req.file.filename;
-            data.category_image = 'images/' + fileName; // Store only the filename with 'images/' prefix
+            if (typeof fileName === "string" && (fileName.startsWith("http://") || fileName.startsWith("https://"))) {
+                data.category_image = fileName;
+            } else {
+                data.category_image = 'images/' + fileName; // Store only the filename with 'images/' prefix
+            }
         } else if (req.body.category_image) {
-            // Extract only the filename from the given full URL
-            const imagePath = req.body.category_image.split('/').pop(); // Get last part after '/'
-            data.category_image = 'images/' + imagePath;
+            if (typeof req.body.category_image === "string" && (req.body.category_image.startsWith("http://") || req.body.category_image.startsWith("https://"))) {
+                data.category_image = req.body.category_image;
+            } else {
+                // Extract only the filename from the given full URL
+                const imagePath = req.body.category_image.split('/').pop(); // Get last part after '/'
+                data.category_image = 'images/' + imagePath;
+            }
         }
 
         const result = await categoryServices.updateCategoryService(req.params.id, data);
@@ -146,12 +171,18 @@ exports.addAllCategory = async (req, res, next) => {
 // Get show categories
 exports.getShowCategory = async (req, res, next) => {
     try {
-        const categories = await categoryServices.getShowCategoryServices();
+        const { jewellery_type } = req.query;
+        const query = { status: 'Show' };
+        if (jewellery_type === 'all_fine' || jewellery_type === '9_carat') {
+            query.jewellery_type = jewellery_type;
+        }
+
+        const categories = await categoryServices.getShowCategoryServices(query);
 
         const formattedCategories = categories.map(category => ({
             ...category.toObject(),
             category_image: category.category_image
-                ? `${process.env.ADMIN_URL}${category.category_image}`
+                ? ((category.category_image.startsWith('http://') || category.category_image.startsWith('https://')) ? category.category_image : `${process.env.ADMIN_URL}${category.category_image}`)
                 : null,
         }));
 
@@ -173,7 +204,7 @@ exports.getAllCategory = async (req, res, next) => {
         const formattedCategories = categories.map(category => ({
             ...category.toObject(), // Convert Mongoose document to plain object
             category_image: category.category_image
-                ? `${process.env.ADMIN_URL}${category.category_image}`
+                ? ((category.category_image.startsWith('http://') || category.category_image.startsWith('https://')) ? category.category_image : `${process.env.ADMIN_URL}${category.category_image}`)
                 : null,
         }));
 
@@ -189,15 +220,20 @@ exports.getAllCategory = async (req, res, next) => {
 // Controller method
 exports.getWebCategory = async (req, res, next) => {
     try {
-        const categories = await categoryServices.getWebCategoryServices();
+        const { jewellery_type } = req.query;
+        const categories = await categoryServices.getWebCategoryServices(jewellery_type);
 
         // Format image URLs with ADMIN_URL if needed
         const formattedCategories = categories.map(category => ({
             ...category,
-            img: category.img ? `${process.env.ADMIN_URL}${category.img}` : null,
+            img: category.img
+                ? ((category.img.startsWith('http://') || category.img.startsWith('https://')) ? category.img : `${process.env.ADMIN_URL}${category.img}`)
+                : null,
             products: category.products.map(product => ({
                 ...product,
-                img: product.img ? `${process.env.ADMIN_URL}${product.img}` : null
+                img: product.img
+                    ? ((product.img.startsWith('http://') || product.img.startsWith('https://')) ? product.img : `${process.env.ADMIN_URL}${product.img}`)
+                    : null
             }))
         }));
 
@@ -254,13 +290,13 @@ exports.getProductTypeCategory = async (req, res, next) => {
             category: {
                 ...category.toObject(),
                 category_image: category.category_image
-                    ? `${process.env.ADMIN_URL}${category.category_image}`
+                    ? ((category.category_image.startsWith('http://') || category.category_image.startsWith('https://')) ? category.category_image : `${process.env.ADMIN_URL}${category.category_image}`)
                     : null,
             },
             products: products.map(product => ({
                 ...product.toObject(),
                 product_images: product.product_images.map(image =>
-                    `${process.env.ADMIN_URL}${image}` // Adding full URL
+                    (image.startsWith('http://') || image.startsWith('https://')) ? image : `${process.env.ADMIN_URL}${image}` // Adding full URL
                 ),
                 // Add any product image formatting here if needed
             })),
@@ -306,7 +342,7 @@ exports.getSingleCategory = async (req, res, next) => {
         const formattedCategory = {
             ...category.toObject(),
             category_image: category.category_image
-                ? `${process.env.ADMIN_URL}${category.category_image}`
+                ? ((category.category_image.startsWith('http://') || category.category_image.startsWith('https://')) ? category.category_image : `${process.env.ADMIN_URL}${category.category_image}`)
                 : null,
         };
 

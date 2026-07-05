@@ -20,7 +20,7 @@ exports.addBanner = async (req, res, next) => {
 
         const data = {
             banner_title: req.body.banner_title,
-            banner_image: 'images/' + req.file.filename,
+            banner_image: (req.file.filename.startsWith("http://") || req.file.filename.startsWith("https://")) ? req.file.filename : 'images/' + req.file.filename,
             status: req.body.status || 'Show',
             link: req.body.link || '',
             order: req.body.order || 0,
@@ -43,7 +43,7 @@ exports.getAllBanners = async (req, res, next) => {
         const banners = await bannerService.getAllBannersService();
         const formattedBanners = banners.map(banner => ({
             ...banner.toObject(),
-            banner_image: banner.banner_image ? `${process.env.ADMIN_URL}${banner.banner_image}` : null,
+            banner_image: banner.banner_image ? ((banner.banner_image.startsWith("http://") || banner.banner_image.startsWith("https://")) ? banner.banner_image : `${process.env.ADMIN_URL}${banner.banner_image}`) : null,
         }));
         res.status(200).json({ success: true, data: formattedBanners });
     } catch (error) {
@@ -66,7 +66,7 @@ exports.getABanner = async (req, res, next) => {
 
         const formattedBanner = {
             ...banner.toObject(),
-            banner_image: banner.banner_image ? `${process.env.ADMIN_URL}${banner.banner_image}` : null,
+            banner_image: banner.banner_image ? ((banner.banner_image.startsWith("http://") || banner.banner_image.startsWith("https://")) ? banner.banner_image : `${process.env.ADMIN_URL}${banner.banner_image}`) : null,
         };
 
         res.status(200).json({
@@ -84,7 +84,7 @@ exports.getActiveBanners = async (req, res, next) => {
         const banners = await bannerService.getActiveBannersService();
         const formattedBanners = banners.map(banner => ({
             ...banner.toObject(),
-            banner_image: banner.banner_image ? `${process.env.ADMIN_URL}${banner.banner_image}` : null,
+            banner_image: banner.banner_image ? ((banner.banner_image.startsWith("http://") || banner.banner_image.startsWith("https://")) ? banner.banner_image : `${process.env.ADMIN_URL}${banner.banner_image}`) : null,
         }));
         res.status(200).json({ success: true, data: formattedBanners });
     } catch (error) {
@@ -97,7 +97,7 @@ exports.updateBanner = async (req, res, next) => {
     try {
         const data = { ...req.body };
         if (req.file) {
-            data.banner_image = 'images/' + req.file.filename;
+            data.banner_image = (req.file.filename.startsWith("http://") || req.file.filename.startsWith("https://")) ? req.file.filename : 'images/' + req.file.filename;
         }
         const result = await bannerService.updateBannerService(req.params.id, data);
         res.status(200).json({
