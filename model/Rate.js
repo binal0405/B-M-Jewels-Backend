@@ -27,6 +27,8 @@ rateSchema.statics.updateRatesAndProductPrices = async function (rates) {
 
         switch (metalType.metal_name.toLowerCase()) {
             case "gold":
+            case "rose gold":
+            case "white gold":
                 rateValue = gold_rate;
                 break;
             case "silver":

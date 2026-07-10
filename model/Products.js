@@ -47,8 +47,22 @@ productSchema.methods.getBaseRate = async function () {
     const Rate = mongoose.model("Rate");
 
     // Find the latest rate for this metal type
-    const rateData = await Rate.findOne({ metal_type: this.metal_type._id })
+    let rateData = await Rate.findOne({ metal_type: this.metal_type._id })
         .sort({ createdAt: -1 });
+
+    // Fallback: If it's a gold-related metal, try to find the rate for base "Gold"
+    if (!rateData) {
+        const metalName = this.metal_type.metal_name.toLowerCase();
+        if (metalName.includes('gold')) {
+            const goldMetal = await mongoose.model("MetalType").findOne({ 
+                metal_name: { $regex: /^gold$/i } 
+            });
+            if (goldMetal) {
+                rateData = await Rate.findOne({ metal_type: goldMetal._id })
+                    .sort({ createdAt: -1 });
+            }
+        }
+    }
 
     if (!rateData) {
         throw new Error(`No rate found for ${this.metal_type.metal_name}`);
@@ -63,37 +77,47 @@ productSchema.methods.getBaseRate = async function () {
 productSchema.methods.getEffectiveRate = async function () {
     const baseRate = await this.getBaseRate();
 
-    // Check if the metal is gold-related (Gold, Rose Gold, White Gold)
     const metalName = this.metal_type.metal_name.toLowerCase();
     const isGoldRelated = metalName.includes('gold');
+    const isSilverRelated = metalName.includes('silver');
 
-    if (!isGoldRelated) {
+    if (!isGoldRelated && !isSilverRelated) {
         return baseRate;
     }
 
-    // For gold, calculate based on purity
     if (!this.purity) {
-        throw new Error("Purity is required for gold products");
+        throw new Error(`Purity is required for ${this.metal_type.metal_name} products`);
     }
 
     await this.populate('purity');
     console.log("Purity:", this.purity.product_purity); // Debugging
 
-    // Carat to purity factor mapping
-    const purityMapping = {
-        24: 1.00,
-        22: 0.916,
-        18: 0.76, // 18K purity updated to 76% as requested
-        14: 0.60,
-        9: 0.40
-    };
-
     const carat = this.purity.product_purity;
-    const purityFactor = purityMapping[carat] !== undefined 
-        ? purityMapping[carat] 
-        : parseFloat((carat / 24).toFixed(2));
 
-    return baseRate * purityFactor;
+    if (isGoldRelated) {
+        // Carat to purity factor mapping for gold
+        const purityMapping = {
+            24: 1.00,
+            22: 0.916,
+            18: 0.76, // 18K purity updated to 76% as requested
+            14: 0.60,
+            9: 0.40
+        };
+
+        const purityFactor = purityMapping[carat] !== undefined 
+            ? purityMapping[carat] 
+            : parseFloat((carat / 24).toFixed(2));
+
+        return baseRate * purityFactor;
+    }
+
+    if (isSilverRelated) {
+        // Purity factor for silver: e.g. 92.5% or 925/1000
+        const purityFactor = carat > 100 ? carat / 1000 : carat / 100;
+        return baseRate * purityFactor;
+    }
+
+    return baseRate;
 };
 
 /**
@@ -116,8 +140,7 @@ productSchema.methods.getMakingCharges = async function () {
         const materialCost = await this.getMaterialCost();
         return (materialCost * this.making_charges_per_gm) / 100;
     } else {
-        // return this.making_charges_per_gm * this.weight;
-        return this.making_charges_per_gm;
+        return this.making_charges_per_gm * this.weight;
     }
 };
 
