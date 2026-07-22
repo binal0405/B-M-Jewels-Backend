@@ -22,7 +22,7 @@ const productSchema = new mongoose.Schema({
     pcs: { type: Number, required: false },
     wastage: { type: Number, required: false },
     other_charges: { type: Number, required: false },
-    making_type: { type: String, enum: ["percentage", "flat"], default: "flat" },
+    making_type: { type: String, enum: ["percentage", "flat", "flat_per_gram"], default: "flat" },
     design_code: { type: String },
     product_images: [{ type: String, required: true }],
     discount_type: { type: String, enum: ["none", "flat", "percentage"], default: "none" },
@@ -99,8 +99,8 @@ productSchema.methods.getEffectiveRate = async function () {
         const purityMapping = {
             24: 1.00,
             22: 0.916,
-            18: 0.76, // 18K purity updated to 76% as requested
-            14: 0.60,
+            18: 0.75, // 18K purity updated to 75% as per formula specification
+            14: 0.585, // 14K purity updated to 58.5% as per formula specification
             9: 0.40
         };
 
@@ -112,9 +112,8 @@ productSchema.methods.getEffectiveRate = async function () {
     }
 
     if (isSilverRelated) {
-        // Purity factor for silver: e.g. 92.5% or 925/1000
-        const purityFactor = carat > 100 ? carat / 1000 : carat / 100;
-        return baseRate * purityFactor;
+        // For silver, the purity factor is ignored in price calculations as per sheet specification
+        return baseRate;
     }
 
     return baseRate;
@@ -138,9 +137,11 @@ productSchema.methods.getMakingCharges = async function () {
 
     if (this.making_type === "percentage") {
         const materialCost = await this.getMaterialCost();
-        return (materialCost * this.making_charges_per_gm) / 100;
-    } else {
+        return ((materialCost + 100) * this.making_charges_per_gm) / 100;
+    } else if (this.making_type === "flat_per_gram") {
         return this.making_charges_per_gm * this.weight;
+    } else {
+        return this.making_charges_per_gm;
     }
 };
 
