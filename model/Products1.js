@@ -18,7 +18,7 @@ const productSchema = new mongoose.Schema(
         promo_type: { type: mongoose.Schema.Types.ObjectId, ref: "PromoType", required: false },
         jewellery_type: { type: String, required: null },
         making_charges_per_gm: { type: Number, required: false }, // Making charges per gram
-        making_type: { type: String, enum: ["percentage", "flat"], default: "flat" }, // Making charge type
+        making_type: { type: String, enum: ["percentage", "flat", "flat_per_gram"], default: "flat" }, // Making charge type
         design_code: { type: String },
         product_images: [{ type: String, required: true }],
         discount_type: { type: String, enum: ["none", "flat", "percentage"], default: "none" },
@@ -70,13 +70,16 @@ productSchema.methods.getMaterialCost = async function () {
  * If making_type is 'flat', use the flat rate (making_charges_per_gm * weight).
  */
 productSchema.methods.getMakingCharges = async function () {
-    const materialCost = await this.getMaterialCost();
-    // if (this.making_type === "percentage") {
-    //   return (materialCost * this.making_charges_per_gm);
-    // } else {
-    //   return this.making_charges_per_gm * this.weight;
-    // }
-    return this.making_charges_per_gm * this.weight;
+    if (!this.making_charges_per_gm) return 0;
+
+    if (this.making_type === "percentage") {
+        const materialCost = await this.getMaterialCost();
+        return ((materialCost + 100) * this.making_charges_per_gm) / 100;
+    } else if (this.making_type === "flat_per_gram") {
+        return this.making_charges_per_gm * this.weight;
+    } else {
+        return this.making_charges_per_gm;
+    }
 };
 
 /**
