@@ -61,7 +61,7 @@ productSchema.methods.getPerGramPrice = async function () {
  */
 productSchema.methods.getMaterialCost = async function () {
     const perGramPrice = await this.getPerGramPrice();
-    return this.weight * perGramPrice;
+    return Math.round(this.weight * perGramPrice);
 };
 
 /**
@@ -72,14 +72,16 @@ productSchema.methods.getMaterialCost = async function () {
 productSchema.methods.getMakingCharges = async function () {
     if (!this.making_charges_per_gm) return 0;
 
+    let makingCharges = 0;
     if (this.making_type === "percentage") {
         const materialCost = await this.getMaterialCost();
-        return ((materialCost + 100) * this.making_charges_per_gm) / 100;
+        makingCharges = (materialCost * this.making_charges_per_gm) / 100;
     } else if (this.making_type === "flat_per_gram") {
-        return this.making_charges_per_gm * this.weight;
+        makingCharges = this.making_charges_per_gm * this.weight;
     } else {
-        return this.making_charges_per_gm;
+        makingCharges = this.making_charges_per_gm;
     }
+    return Math.round(makingCharges);
 };
 
 /**
@@ -98,7 +100,7 @@ productSchema.methods.getDiscountedMakingCharges = async function () {
         discountedMakingCharges = makingCharges - this.discount;
     }
 
-    return Math.max(discountedMakingCharges, 0); // Ensure making charges don't go negative
+    return Math.round(Math.max(discountedMakingCharges, 0)); // Ensure making charges don't go negative
 };
 
 /**
@@ -155,7 +157,7 @@ productSchema.methods.getFinalPrice = async function () {
         const finalPrice = materialCost + discountedMakingCharges + taxOnMaterial + taxOnMakingCharges;
         console.log("Final Price:", finalPrice); // Debugging
 
-        return finalPrice;
+        return Math.round(finalPrice);
     } catch (error) {
         console.error("Error calculating final price:", error);
         return null; // Return null if there's an error
