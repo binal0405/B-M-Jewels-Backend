@@ -2,6 +2,7 @@ const express = require("express");
 const {
   paymentIntent,
   addOrder,
+  createRazorpayOrder,
   getOrders,
   updateOrderStatus,
   getSingleOrder,
@@ -16,6 +17,8 @@ router.get("/orders", getOrders);
 router.get("/:id", getSingleOrder);
 // add a create payment intent
 router.post("/create-payment-intent", paymentIntent);
+// create razorpay order
+router.post("/create-razorpay-order", createRazorpayOrder);
 // save Order
 router.post("/saveOrder", addOrder);
 // update status

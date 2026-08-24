@@ -21,6 +21,8 @@ const secret = {
     client_url: process.env.STORE_URL,
     admin_url: process.env.ADMIN_URL,
     jwt_secret: process.env.JWT_SECRET,
+    razorpay_key_id: process.env.RAZORPAY_KEY_ID,
+    razorpay_key_secret: process.env.RAZORPAY_KEY_SECRET,
 };
 
 module.exports = {

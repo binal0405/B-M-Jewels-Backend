@@ -87,3 +87,35 @@ exports.updateOrderStatus = async (req, res) => {
     next(error)
   }
 };
+
+
+// Razorpay Integration
+const Razorpay = require("razorpay");
+exports.createRazorpayOrder = async (req, res, next) => {
+  try {
+    const { price } = req.body;
+    if (!price) {
+      return res.status(400).json({ message: "Price is required" });
+    }
+
+    const instance = new Razorpay({
+      key_id: secret.razorpay_key_id || "rzp_test_placeholder",
+      key_secret: secret.razorpay_key_secret || "placeholder",
+    });
+
+    const options = {
+      amount: Math.round(Number(price) * 100), // amount in paisa
+      currency: "INR",
+      receipt: "receipt_" + Math.random().toString(36).substring(2, 15),
+    };
+
+    const order = await instance.orders.create(options);
+    res.status(200).json({
+      success: true,
+      order,
+    });
+  } catch (error) {
+    console.error("Razorpay order creation error:", error);
+    next(error);
+  }
+};
