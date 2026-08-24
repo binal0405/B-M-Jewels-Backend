@@ -1,4 +1,9 @@
 require("dotenv").config();
+const dns = require("dns");
+if (process.env.NODE_DNS_SERVERS) {
+  const servers = process.env.NODE_DNS_SERVERS.split(",");
+  if (servers.length) dns.setServers(servers);
+}
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const { secret } = require("../config/secret");

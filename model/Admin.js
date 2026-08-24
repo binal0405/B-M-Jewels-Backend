@@ -63,8 +63,7 @@ const adminSchema = new mongoose.Schema(
       },
       createdAt: {
         type: Date,
-        default: Date.now,
-        expires: '30d' // tokens expire after 30 days
+        default: Date.now
       }
     }],
     joiningDate: {
