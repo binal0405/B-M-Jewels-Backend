@@ -29,31 +29,54 @@ const adminData = require('./utils/admin');
 connectDB();
 const importData = async () => {
   try {
-    await Brand.deleteMany();
-    await Brand.insertMany(brandData);
+    const allowWipe = process.env.ALLOW_SEED_WIPE === 'true';
 
-    await Category.deleteMany();
-    await Category.insertMany(categoryData);
+    const adminCount = await Admin.countDocuments();
+    if (adminCount === 0 || allowWipe) {
+      if (allowWipe) await Admin.deleteMany();
+      await Admin.insertMany(adminData);
+      console.log('Admin data seeded!');
+    } else {
+      console.log(`Skipping Admin seed — ${adminCount} admins already exist. (Set ALLOW_SEED_WIPE=true to overwrite)`);
+    }
 
-    await Products.deleteMany();
-    await Products.insertMany(productsData);
+    const userCount = await User.countDocuments();
+    if (userCount === 0 || allowWipe) {
+      if (allowWipe) await User.deleteMany();
+      await User.insertMany(userData);
+      console.log('User data seeded!');
+    } else {
+      console.log(`Skipping User seed — ${userCount} users already exist.`);
+    }
 
-    await Coupon.deleteMany();
-    await Coupon.insertMany(couponData);
+    if (allowWipe) {
+      await Brand.deleteMany();
+      await Brand.insertMany(brandData);
 
-    await Order.deleteMany();
-    await Order.insertMany(orderData);
+      await Category.deleteMany();
+      await Category.insertMany(categoryData);
 
-    await User.deleteMany();
-    await User.insertMany(userData);
+      await Products.deleteMany();
+      await Products.insertMany(productsData);
 
-    await Reviews.deleteMany();
-    await Reviews.insertMany(reviewsData);
+      await Coupon.deleteMany();
+      await Coupon.insertMany(couponData);
 
-    await Admin.deleteMany();
-    await Admin.insertMany(adminData);
+      await Order.deleteMany();
+      await Order.insertMany(orderData);
 
-    console.log('data inserted successfully!');
+      await Reviews.deleteMany();
+      await Reviews.insertMany(reviewsData);
+    } else {
+      if ((await Brand.countDocuments()) === 0) await Brand.insertMany(brandData);
+      if ((await Category.countDocuments()) === 0) await Category.insertMany(categoryData);
+      if ((await Products.countDocuments()) === 0) await Products.insertMany(productsData);
+      if ((await Coupon.countDocuments()) === 0) await Coupon.insertMany(couponData);
+      if ((await Order.countDocuments()) === 0) await Order.insertMany(orderData);
+      if ((await Reviews.countDocuments()) === 0) await Reviews.insertMany(reviewsData);
+    }
+
+    console.log('Data import check completed successfully!');
     process.exit();
   } catch (error) {
     console.log('error', error);
