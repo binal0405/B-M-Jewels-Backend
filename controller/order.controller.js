@@ -113,6 +113,8 @@ exports.createRazorpayOrder = async (req, res, next) => {
     res.status(200).json({
       success: true,
       order,
+      key: secret.razorpay_key_id,
+      key_id: secret.razorpay_key_id,
     });
   } catch (error) {
     console.error("Razorpay order creation error:", error);
