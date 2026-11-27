@@ -46,10 +46,10 @@ router.patch("/change-password", changePassword);
 router.post("/logout", logoutAdmin);
 
 //login a admin
-router.post("/add", addStaff);
+router.post("/add", isAuth, addStaff);
 
 //login a admin
-router.get("/all", getAllStaff);
+router.get("/all", isAuth, getAllStaff);
 
 //forget-password
 router.patch("/forget-password", forgetPassword);
@@ -58,20 +58,20 @@ router.patch("/forget-password", forgetPassword);
 router.patch("/confirm-forget-password", confirmAdminForgetPass);
 
 //get a staff
-router.get("/get/:id", getStaffById);
+router.get("/get/:id", isAuth, getStaffById);
 
 // update a staff
-router.patch("/update-stuff/:id", updateStaff);
+router.patch("/update-stuff/:id", isAuth, updateStaff);
 
 //update staf status
 // router.put("/update-status/:id", updatedStatus);
 
 //delete a staff
-router.delete("/:id", deleteStaff);
+router.delete("/:id", isAuth, deleteStaff);
 
 // Routes
-router.get('/profile/:id', getAdminProfile);
-router.put('/profile/:id', upload.single('image'), upload.cloudinaryUpload, updateAdminProfile);
+router.get('/profile/:id', isAuth, getAdminProfile);
+router.put('/profile/:id', isAuth, upload.single('image'), upload.cloudinaryUpload, updateAdminProfile);
 
 
 // routeer.get("/admin", getAdmin);
