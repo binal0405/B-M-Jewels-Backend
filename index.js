@@ -43,6 +43,7 @@ const cloudinaryRoutes = require("./routes/cloudinary.routes");
 const cartRoutes = require("./routes/cart.routes");
 const goldSchemeRoutes = require("./routes/goldScheme.routes");
 const imageFeedRoutes = require("./routes/imageFeed.routes");
+const dhlRoutes = require("./routes/dhl.routes");
 
 // middleware
 app.use(cors());
@@ -80,6 +81,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/gold-scheme", goldSchemeRoutes);
 app.use("/api/image-feed", imageFeedRoutes);
+app.use("/api/dhl", dhlRoutes);
 // app.use("/api/login", loginRoutes);
 // https://data-asg.goldprice.org/dbXRates/INR
 // root route
