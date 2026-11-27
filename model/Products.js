@@ -100,13 +100,22 @@ productSchema.methods.getEffectiveRate = async function () {
             24: 1.00,
             22: 0.916,
             18: 0.75, // 18K purity updated to 75% as per formula specification
-            14: 0.585, // 14K purity updated to 58.5% as per formula specification
+            14: 0.60, // Default 14K purity factor
             9: 0.40
         };
 
-        const purityFactor = purityMapping[carat] !== undefined 
+        let purityFactor = purityMapping[carat] !== undefined 
             ? purityMapping[carat] 
             : parseFloat((carat / 24).toFixed(2));
+
+        // For 14K Gold: use 0.60 for 'flat', 'flat_per_gram' and 'percentage' making types, and 0.585 for others
+        if (carat === 14) {
+            if (this.making_type === 'flat' || this.making_type === 'flat_per_gram' || this.making_type === 'percentage') {
+                purityFactor = 0.60;
+            } else {
+                purityFactor = 0.585;
+            }
+        }
 
         return baseRate * purityFactor;
     }
@@ -233,17 +242,36 @@ productSchema.pre("findOneAndUpdate", async function (next) {
             return next(new Error("Product not found"));
         }
 
-        // Skip if price is being explicitly set
-        if (update.price !== undefined && update.price !== null) {
+        const priceIsFixed = update.price_is_fixed !== undefined ? update.price_is_fixed : product.price_is_fixed;
+
+        // Skip recalculation only if the price is fixed and a custom price is explicitly provided
+        if (priceIsFixed && update.price !== undefined && update.price !== null && Number(update.price) !== 0) {
             return next();
         }
 
         // Recalculate if relevant fields are modified
-        const shouldRecalculate = (update.weight || update.metal_type || update.purity || update.making_charges_per_gm || update.making_type || update.discount_type || update.discount);
+        const shouldRecalculate = (
+            update.weight !== undefined ||
+            update.metal_type !== undefined ||
+            update.purity !== undefined ||
+            update.making_charges_per_gm !== undefined ||
+            update.making_type !== undefined ||
+            update.discount_type !== undefined ||
+            update.discount !== undefined ||
+            update.hall_mark_charges !== undefined ||
+            update.additional_charges !== undefined ||
+            update.other_charges !== undefined ||
+            update.price_is_fixed !== undefined
+        );
 
         if (shouldRecalculate) {
+            // Apply the updates to the product instance to calculate with the new values
+            Object.assign(product, update);
             const finalPrice = await product.getFinalPrice();
-            this.setUpdate({ ...update, price: finalPrice || 0 });
+            
+            if (!priceIsFixed) {
+                this.setUpdate({ ...update, price: finalPrice || 0 });
+            }
         }
 
         next();

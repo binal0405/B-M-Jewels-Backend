@@ -80,9 +80,43 @@ const orderSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-
-            enum: ["pending", "processing", "delivered", 'cancel'],
+            enum: ["pending", "processing", "dispatched", "shipped", "out for delivery", "delivered", "cancel", "cancelled"],
             lowercase: true,
+            default: "pending",
+        },
+        // DHL Express Integration Fields
+        dhlAwbNumber: {
+            type: String,
+            required: false,
+        },
+        dhlShipmentStatus: {
+            type: String,
+            required: false,
+        },
+        dhlLabelUrl: {
+            type: String,
+            required: false,
+        },
+        dhlInvoiceUrl: {
+            type: String,
+            required: false,
+        },
+        dhlPieceBarcode: {
+            type: String,
+            required: false,
+        },
+        dhlTrackingEvents: [
+            {
+                date: String,
+                time: String,
+                description: String,
+                location: String,
+                code: String,
+            }
+        ],
+        dhlBookingDetails: {
+            type: Object,
+            required: false,
         },
     },
     {
